@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Información de Seguridad</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-image: url('background.jpg'); /* Asegúrate de que la imagen esté en la carpeta 'public' */
+      background-size: auto;
+      background-position: center;
+      background-repeat: repeat; /* Hace que la imagen se repita */
+      background-attachment: fixed;
+    }
+    .overlay {
+      backdrop-filter: blur(5px);
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 50px auto;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333333;
+    }
+    p {
+      font-size: 16px;
+      margin: 10px 0;
+      color: #555555;
+    }
+    .success {
+      color: red; /* Cambiado a rojo según tu solicitud */
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .error {
+      color: red;
+      text-align: center;
+      font-weight: bold;
+    }
+    .educational {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-left: 4px solid #FF0000;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <h2>‼️Información extraída exitosamente‼️🚨🔴☠️💀🚩</h2>
+    <p><strong>Resolución de Pantalla:</strong> <span id="screenResolution">Cargando...</span></p>
+    <p><strong>Cookies Habilitadas:</strong> <span id="cookiesEnabled">Cargando...</span></p>
+    <p><strong>Navegador y Versión:</strong> <span id="browserInfo">Cargando...</span></p>
+    <p><strong>Sistema Operativo:</strong> <span id="osInfo">Cargando...</span></p>
+    <p><strong>Dirección IP Pública:</strong> <span id="ipAddress">Cargando...</span></p>
+    <p><strong>User-Agent Completo:</strong> <span id="userAgent">Cargando...</span></p>
+    <p><strong>Marca del Dispositivo:</strong> <span id="deviceBrand">Cargando...</span></p>
+    <p id="statusMessage"></p>
+
+    <div class="educational">
+      <h1>¿Sabías que cualquier sitio al que accedes puede conocer tu ubicación y detalles de tu dispositivo?</h1>
+      <h2>¿Qué datos pueden ser recopilados?</h2>
+      <h3>Un sitio web puede obtener información como:</h3>
+        <ul>
+          <li>Tu dirección IP, que puede determinar tu ubicación aproximada.</li>
+          <li>El sistema operativo y navegador que estás usando.</li>
+          <li>Cookies que rastrean tu actividad en línea.</li>
+        </ul>
+    </div>
+  </div>
+
+  <script>
+    const socket = new WebSocket(`ws://${window.location.hostname}:8080`);
+
+    const screenResolutionElem = document.getElementById('screenResolution');
+    const cookiesEnabledElem = document.getElementById('cookiesEnabled');
+    const browserInfoElem = document.getElementById('browserInfo');
+    const osInfoElem = document.getElementById('osInfo');
+    const ipAddressElem = document.getElementById('ipAddress');
+    const userAgentElem = document.getElementById('userAgent');
+    const deviceBrandElem = document.getElementById('deviceBrand');
+    const statusMessageElem = document.getElementById('statusMessage');
+
+    function getBrowserInfo() {
+      const userAgent = navigator.userAgent;
+      let browserName = "Desconocido";
+      let fullVersion = "Desconocido";
+
+      if ((offset = userAgent.indexOf("Chrome")) != -1 && userAgent.indexOf("Edg") == -1) {
+        browserName = "Chrome";
+        fullVersion = userAgent.substring(offset + 7);
+      } else if ((offset = userAgent.indexOf("Firefox")) != -1) {
+        browserName = "Firefox";
+        fullVersion = userAgent.substring(offset + 8);
+      } else if ((offset = userAgent.indexOf("Safari")) != -1 && userAgent.indexOf("Chrome") == -1) {
+        browserName = "Safari";
+        fullVersion = userAgent.substring(offset + 7);
+        if ((offset = userAgent.indexOf("Version")) != -1)
+          fullVersion = userAgent.substring(offset + 8);
+      } else if ((offset = userAgent.indexOf("MSIE")) != -1) {
+        browserName = "Internet Explorer";
+        fullVersion = userAgent.substring(offset + 5);
+      } else if ((offset = userAgent.indexOf("Edg")) != -1) {
+        browserName = "Edge";
+        fullVersion = userAgent.substring(offset + 4);
+      }
+
+      if ((ix = fullVersion.indexOf(";")) != -1) fullVersion = fullVersion.substring(0, ix);
+      if ((ix = fullVersion.indexOf(" ")) != -1) fullVersion = fullVersion.substring(0, ix);
+
+      return `${browserName} ${fullVersion}`;
+    }
+
+    function getOSInfo() {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      
+      if (/windows phone/i.test(userAgent)) {
+        return "Windows Phone";
+      }
+      
+      if (/android/i.test(userAgent)) {
+        return "Android";
+      }
+      
+      if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        return "iOS";
+      }
+      
+      if (/Macintosh|Mac OS X/i.test(userAgent)) {
+        return "MacOS";
+      }
+      
+      if (/Windows/i.test(userAgent)) {
+        return "Windows";
+      }
+      
+      return "Desconocido";
+    }
+
+    function getIP() {
+      fetch('https://api.ipify.org?format=json')
+        .then(response => response.json())
+        .then(data => {
+          ipAddressElem.innerText = data.ip;
+        })
+        .catch(() => {
+          ipAddressElem.innerText = 'No disponible';
+        });
+    }
+
+    function getDeviceBrand() {
+      const userAgent = navigator.userAgent.toLowerCase();
+      let brand = "Desconocido";
+
+      if (/iphone|ipad|ipod/.test(userAgent)) {
+        brand = "Apple";
+      } else if (/samsung/.test(userAgent)) {
+        brand = "Samsung";
+      } else if (/xiaomi/.test(userAgent)) {
+        brand = "Xiaomi";
+      } else if (/huawei/.test(userAgent)) {
+        brand = "Huawei";
+      } else if (/poco/.test(userAgent)) {
+        brand = "Poco";
+      } else if (/oneplus/.test(userAgent)) {
+        brand = "OnePlus";
+      } else if (/oppo/.test(userAgent)) {
+        brand = "Oppo";
+      } else if (/vivo/.test(userAgent)) {
+        brand = "Vivo";
+      } else if (/lenovo/.test(userAgent)) {
+        brand = "Lenovo";
+      } else if (/lg/.test(userAgent)) {
+        brand = "LG";
+      } else if (/sony/.test(userAgent)) {
+        brand = "Sony";
+      }
+
+      return brand.charAt(0).toUpperCase() + brand.slice(1);
+    }
+
+    const browserInfo = getBrowserInfo();
+    browserInfoElem.innerText = browserInfo;
+
+    const osInfo = getOSInfo();
+    osInfoElem.innerText = osInfo;
+
+    const userAgent = navigator.userAgent;
+    userAgentElem.innerText = userAgent;
+
+    const deviceBrand = getDeviceBrand();
+    deviceBrandElem.innerText = deviceBrand;
+
+    getIP();
+
+    socket.onopen = () => {
+      const screenWidth = window.screen.width;
+      const screenHeight = window.screen.height;
+      const cookiesEnabled = navigator.cookieEnabled ? 1 : 0;
+
+      screenResolutionElem.innerText = `${screenWidth} x ${screenHeight}`;
+      cookiesEnabledElem.innerText = cookiesEnabled === 1 ? 'Sí' : 'No';
+
+      socket.send(JSON.stringify({
+        role: 'user',
+        screenWidth,
+        screenHeight,
+        cookiesEnabled,
+        browserInfo: browserInfo,
+        os: osInfo,
+        deviceBrand: deviceBrand
+      }));
+    };
+
+    socket.onmessage = (event) => {
+      const receivedData = JSON.parse(event.data);
+      if (receivedData.status === 'success') {
+        statusMessageElem.innerText = 'Tus datos han sido enviados correctamente y esto es solo una parte de la información que puede ser recopilada 😈';
+        statusMessageElem.className = 'success';
+      } else if (receivedData.status === 'error') {
+        statusMessageElem.innerText = 'Hubo un error al enviar tus datos.';
+        statusMessageElem.className = 'error';
+      }
+    };
+
+    socket.onerror = () => {
+      statusMessageElem.innerText = 'Error en la conexión con el servidor.';
+      statusMessageElem.className = 'error';
+    };
+  </script>
+</body>
+</html>

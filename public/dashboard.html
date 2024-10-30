@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard de Ciberseguridad</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f0f4f8;
+    }
+    #charts-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adaptable a diferentes tamaños */
+      gap: 20px;
+    }
+    .chart-box {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    h3 {
+      text-align: center;
+      color: #333333;
+      font-size: 16px;
+    }
+    p {
+      font-size: 12px;
+      text-align: center;
+      color: #555555;
+    }
+
+    .summary {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 15px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .summary p {
+      font-size: 16px;
+      color: #333333;
+    }
+
+    @media (max-width: 768px) {
+      .chart-box {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Dashboard de Ciberseguridad</h1>
+  <p>Estadísticas sobre las prácticas de seguridad de los dispositivos que han visitado nuestro sitio.</p>
+
+  <div class="summary">
+    <p><strong>Total de Dispositivos:</strong> <span id="totalDevices">Cargando...</span></p>
+  </div>
+
+  <div id="charts-container">
+    <div class="chart-box">
+      <h3>Resolución de Pantalla</h3>
+      <canvas id="screenChart"></canvas>
+      <p>Resolución de pantalla utilizada por los usuarios.</p>
+    </div>
+    <div class="chart-box">
+      <h3>Cookies Habilitadas</h3>
+      <canvas id="cookiesChart"></canvas>
+      <p>Porcentaje de usuarios con cookies habilitadas.</p>
+    </div>
+    <div class="chart-box">
+      <h3>Navegador y Versión</h3>
+      <canvas id="browserChart"></canvas>
+      <p>Navegadores utilizados por los usuarios.</p>
+    </div>
+    <div class="chart-box">
+      <h3>Sistema Operativo</h3>
+      <canvas id="osChart"></canvas>
+      <p>Sistemas operativos utilizados por los usuarios.</p>
+    </div>
+    <div class="chart-box">
+      <h3>Marca del Dispositivo</h3>
+      <canvas id="deviceBrandChart"></canvas>
+      <p>Marcas de dispositivos utilizadas por los usuarios.</p>
+    </div>
+  </div>
+
+  <script>
+    const socket = new WebSocket(`ws://${window.location.hostname}:8080`);
+
+    const totalDevicesElem = document.getElementById('totalDevices');
+
+    // Resolución de Pantalla
+    const screenCtx = document.getElementById('screenChart').getContext('2d');
+    const screenChart = new Chart(screenCtx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Usuarios',
+          data: [],
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Resolución de Pantalla' }
+        },
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'Cantidad de Usuarios' } },
+          x: { title: { display: true, text: 'Resolución (Ancho x Alto)' } }
+        }
+      }
+    });
+
+    // Cookies Habilitadas
+    const cookiesCtx = document.getElementById('cookiesChart').getContext('2d');
+    const cookiesChart = new Chart(cookiesCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Habilitadas', 'Deshabilitadas'],
+        datasets: [{
+          data: [0, 0],
+          backgroundColor: ['rgba(75, 192, 75, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+          borderColor: ['rgba(75, 192, 75, 1)', 'rgba(255, 99, 132, 1)'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: true, text: 'Cookies Habilitadas' }
+        }
+      }
+    });
+
+    // Navegador y Versión
+    const browserCtx = document.getElementById('browserChart').getContext('2d');
+    const browserChart = new Chart(browserCtx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Usuarios',
+          data: [],
+          backgroundColor: 'rgba(255, 159, 64, 0.6)',
+          borderColor: 'rgba(255, 159, 64, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Navegador y Versión' }
+        },
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'Cantidad de Usuarios' } },
+          x: { title: { display: true, text: 'Navegador y Versión' } }
+        }
+      }
+    });
+
+    // Sistema Operativo
+    const osCtx = document.getElementById('osChart').getContext('2d');
+    const osChart = new Chart(osCtx, {
+      type: 'pie',
+      data: {
+        labels: [],
+        datasets: [{
+          data: [],
+          backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(153, 102, 255, 0.6)', 'rgba(255, 206, 86, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+          borderColor: ['rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 206, 86, 1)', 'rgba(255, 99, 132, 1)'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: true, text: 'Sistema Operativo' }
+        }
+      }
+    });
+
+    // Marca del Dispositivo
+    const deviceBrandCtx = document.getElementById('deviceBrandChart').getContext('2d');
+    const deviceBrandChart = new Chart(deviceBrandCtx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Usuarios',
+          data: [],
+          backgroundColor: 'rgba(255, 206, 86, 0.6)',
+          borderColor: 'rgba(255, 206, 86, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Marca del Dispositivo' }
+        },
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'Cantidad de Usuarios' } },
+          x: { title: { display: true, text: 'Marca' } }
+        }
+      }
+    });
+
+    function updateCharts(data) {
+      // Actualizar resumen
+      totalDevicesElem.innerText = data.totalUsers;
+
+      // Resolución de Pantalla
+      screenChart.data.labels = data.screenResolution.map(item => item.resolution);
+      screenChart.data.datasets[0].data = data.screenResolution.map(item => item.count);
+      screenChart.update();
+
+      // Cookies Habilitadas
+      const enabled = data.cookiesHabilitadas.find(item => item.status === 'Habilitadas')?.count || 0;
+      const disabled = data.cookiesHabilitadas.find(item => item.status === 'Deshabilitadas')?.count || 0;
+      cookiesChart.data.datasets[0].data = [enabled, disabled];
+      cookiesChart.update();
+
+      // Navegador y Versión
+      browserChart.data.labels = data.browserInfo.map(item => item.browser);
+      browserChart.data.datasets[0].data = data.browserInfo.map(item => item.count);
+      browserChart.update();
+
+      // Sistema Operativo
+      osChart.data.labels = data.osInfo.map(item => item.os);
+      osChart.data.datasets[0].data = data.osInfo.map(item => item.count);
+      osChart.update();
+
+      // Marca del Dispositivo
+      deviceBrandChart.data.labels = data.deviceBrandInfo.map(item => item.brand);
+      deviceBrandChart.data.datasets[0].data = data.deviceBrandInfo.map(item => item.count);
+      deviceBrandChart.update();
+    }
+
+    socket.onmessage = (event) => {
+      try {
+        const receivedData = JSON.parse(event.data);
+        updateCharts(receivedData);
+      } catch (error) {
+        console.error('Error al parsear los datos recibidos:', error);
+      }
+    };
+
+    socket.onerror = () => {
+      console.error('Error en la conexión WebSocket');
+    };
+
+    socket.onopen = () => {
+      socket.send(JSON.stringify({ role: 'dashboard' }));
+    };
+  </script>
+</body>
+</html>
