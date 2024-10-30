@@ -1,4 +1,6 @@
 // server.js
+require('dotenv').config();
+
 const express = require('express');
 const WebSocket = require('ws');
 const { MongoClient } = require('mongodb');
@@ -7,7 +9,7 @@ const path = require('path');
 
 // Configuración del servidor Express
 const app = express();
-const PORT = 3000; // Puedes cambiar el puerto si lo deseas
+const PORT = process.env.PORT || 3000;
 
 // Servir archivos estáticos desde la carpeta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
@@ -32,7 +34,8 @@ const dataSchema = Joi.object({
 });
 
 // Conectar a MongoDB
-const mongoClient = new MongoClient('mongodb://localhost:27017', { useUnifiedTopology: true });
+const mongoUri = process.env.MONGO_URI;
+const mongoClient = new MongoClient(mongoUri);
 let db;
 
 mongoClient.connect()
@@ -148,6 +151,8 @@ async function getAggregatedData() {
 }
 
 wss.on('connection', ws => {
+  console.log('Cliente conectado al WebSocket');
+
   ws.on('message', async (message) => {
     try {
       const data = JSON.parse(message);
