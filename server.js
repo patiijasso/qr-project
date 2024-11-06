@@ -15,8 +15,8 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Iniciar el servidor HTTP
-const server = app.listen(PORT, () => {
-  console.log(`Servidor HTTP corriendo en http://localhost:${PORT}`);
+const server = app.listen(PORT,'0.0.0.0', () => {
+  console.log(`Servidor HTTP corriendo en el puerto ${PORT}`);
 });
 
 // Configurar el servidor WebSocket en el mismo servidor
