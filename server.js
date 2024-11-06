@@ -6,6 +6,7 @@ const WebSocket = require('ws');
 const { MongoClient } = require('mongodb');
 const Joi = require('joi');
 const path = require('path');
+const cors = require('cors');
 
 // Configuración del servidor Express
 const app = express();
@@ -13,6 +14,8 @@ const PORT = process.env.PORT || 3000;
 
 // Servir archivos estáticos desde la carpeta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(cors()); 
 
 // Iniciar el servidor HTTP
 const server = app.listen(PORT,'0.0.0.0', () => {
@@ -153,7 +156,8 @@ async function getAggregatedData() {
 wss.on('connection', ws => {
   console.log('Cliente conectado al WebSocket');
 
-  ws.on('message', async (message) => {
+  ws.on('message', (message) => {
+    console.log('Mensaje recibido:', message);
     try {
       const data = JSON.parse(message);
 
